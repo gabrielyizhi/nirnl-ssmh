@@ -26,6 +26,8 @@ parser = argparse.ArgumentParser(description="NIRNL / SSMH cross-modal retrieval
 #### data parameters ####
 #########################
 parser.add_argument("--dataset", type=str, default="nuswide")
+parser.add_argument("--data_root", type=str, default=None)
+parser.add_argument("--noise_root", type=str, default=None)
 parser.add_argument("--method", type=str, default="nirnl", choices=["nirnl", "ssmh"])
 parser.add_argument("--seed", type=int, default=1)
 parser.add_argument("--batch_size", type=int, default=256)
@@ -170,7 +172,14 @@ if __name__ == "__main__":
     to_seed(args.seed)
     print("...Data loading is beginning...")
     print("The noise_ratio is: ", args.noisy_ratio)
-    input_data_par = get_loader(args.dataset, args.batch_size, args.noisy_ratio, args.noise_mode)
+    input_data_par = get_loader(
+        args.dataset,
+        args.batch_size,
+        args.noisy_ratio,
+        args.noise_mode,
+        data_root=args.data_root,
+        noise_root=args.noise_root,
+    )
     print("...Data loading is completed...")
     args.data_class = input_data_par["num_class"]
 

@@ -7,6 +7,37 @@ import h5py
 import random
 import os
 
+
+DEFAULT_DATA_ROOTS = [
+    os.environ.get('NIRNL_DATA_ROOT'),
+    '/home/liuyizhi/NIRNL-AAAI26/Clean_idx',
+    '/home/qinyang/PRTProject/datasets',
+]
+
+
+def _first_existing_path(*parts):
+    for root in DEFAULT_DATA_ROOTS:
+        if not root:
+            continue
+        path = os.path.join(root, *parts)
+        if os.path.exists(path):
+            return path
+    return os.path.join(DEFAULT_DATA_ROOTS[-1], *parts)
+
+
+def _resolve_data_path(filename, data_root=None):
+    if data_root:
+        path = os.path.join(data_root, filename)
+        if os.path.exists(path):
+            return path
+    return _first_existing_path(filename)
+
+
+def _resolve_noise_root(noise_root=None):
+    if noise_root:
+        return noise_root
+    return os.environ.get('NIRNL_NOISE_ROOT', os.path.join(os.getcwd(), 'noisy'))
+
 class CustomDataSet(Dataset):
     def __init__(
             self,
@@ -63,11 +94,11 @@ def get_noisylabels(labels, noisy_radio, noise_mode):
         else:
             noise_label[i, :] = labels[i, :]
     return noise_label
-def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
+def get_loader(data_name, batch_size, noisy_ratio, noise_mode, data_root=None, noise_root=None):
     np.random.seed(1)
     if data_name == 'wiki':
         valid_len = 231
-        path = '/home/qinyang/PRTProject/datasets/wiki.mat'
+        path = _resolve_data_path('wiki.mat', data_root)
         data = sio.loadmat(path)
         img_train = data['train_imgs_deep']
         text_train = data['train_texts_doc']
@@ -86,7 +117,7 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
         label_test_img = label_test_img[valid_len:]
     elif data_name == 'xmedia':
         valid_len = 500
-        path = '/home/qinyang/PRTProject/datasets/XMediaFeatures.mat'
+        path = _resolve_data_path('XMediaFeatures.mat', data_root)
         all_data = sio.loadmat(path)
         img_test = all_data['I_te_CNN'].astype('float32')   # Features of test set for image data, CNN feature
         img_train = all_data['I_tr_CNN'].astype('float32')   # Features of training set for image data, CNN feature
@@ -104,7 +135,7 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
         text_test =  text_test[valid_len:]
         label_test_img = label_test_img[valid_len:]
     elif data_name == 'INRIA-Websearch':
-        path = '/home/qinyang/PRTProject/datasets/INRIA-Websearch.mat'
+        path = _resolve_data_path('INRIA-Websearch.mat', data_root)
         data = sio.loadmat(path)
         img_train = data['tr_img'].astype('float32')
         text_train = data['tr_txt'].astype('float32')
@@ -119,7 +150,7 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
         label_test_img = data['te_img_lab'].reshape([-1,1]).astype('int16') 
     elif data_name == 'nuswide':
         valid_len = 0
-        path = '/home/qinyang/PRTProject/datasets/nus_wide_deep_doc2vec-corr-ae.h5py'
+        path = _resolve_data_path('nus_wide_deep_doc2vec-corr-ae.h5py', data_root)
         with h5py.File(path, 'r') as file:
             groups = list(file.keys())
             img_train = file['train_imgs_deep'][:]
@@ -136,10 +167,10 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
 
     elif data_name == 'xmedianet':
         valid_len = 4000
-        path = '/home/qinyang/windows/sda1/ProjectsOfQy/NoisyLabel/CrossNL/DSCMR/newData/xmedianet_deep_doc2vec_data.h5py'
+        path = _resolve_data_path('xmedianet_deep_doc2vec_data.h5py', data_root)
         with h5py.File(path, 'r') as file:
             groups = list(file.keys())
-        path = '/home/qinyang/windows/sda1/ProjectsOfQy/NoisyLabel/CrossNL/DSCMR/newData/XMediaNet5View_Doc2Vec.mat'
+        path = _resolve_data_path('XMediaNet5View_Doc2Vec.mat', data_root)
         all_data = sio.loadmat(path)
         all_train_data = all_data['train'][0]
         all_train_labels = all_data['train_labels'][0]
@@ -176,7 +207,8 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode):
         label_valid = ind2vec(label_valid.reshape([-1,1])).astype('int16') 
         label_test = ind2vec(label_test.reshape([-1,1])).astype('int16') 
     print('train shape: ', img_train.shape[0], 'valid shape:', img_valid.shape[0], 'test shape:', img_test.shape[0])
-    root_dir = '/home/qinyang/PRTProject/datasets/noisy_labels'
+    root_dir = _resolve_noise_root(noise_root)
+    os.makedirs(root_dir, exist_ok=True)
     noise_file = os.path.join(root_dir, data_name + '_noise_labels_%g_' %noisy_ratio) + noise_mode + '.mat'
     if os.path.exists(noise_file):
         label_noisy = sio.loadmat(noise_file)['noisy_label']
