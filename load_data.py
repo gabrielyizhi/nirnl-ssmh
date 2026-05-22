@@ -100,13 +100,22 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode, data_root=None, n
         valid_len = 231
         path = _resolve_data_path('wiki.mat', data_root)
         data = sio.loadmat(path)
-        img_train = data['train_imgs_deep']
-        text_train = data['train_texts_doc']
-        label_train_img = data['train_imgs_labels'].reshape([-1,1]).astype('int16') 
+        if 'train_imgs_deep' in data:
+            img_train = data['train_imgs_deep']
+            text_train = data['train_texts_doc']
+            label_train_img = data['train_imgs_labels'].reshape([-1,1]).astype('int16')
 
-        img_test = data['test_imgs_deep']
-        text_test = data['test_texts_doc']
-        label_test_img = data['test_imgs_labels'].reshape([-1,1]).astype('int16') 
+            img_test = data['test_imgs_deep']
+            text_test = data['test_texts_doc']
+            label_test_img = data['test_imgs_labels'].reshape([-1,1]).astype('int16')
+        else:
+            img_train = data['img_train']
+            text_train = data['text_train']
+            label_train_img = data['label_train'].reshape([-1,1]).astype('int16')
+
+            img_test = data['img_test']
+            text_test = data['text_test']
+            label_test_img = data['label_test'].reshape([-1,1]).astype('int16')
 
         img_valid = img_test[0:valid_len]
         text_valid = text_test[0:valid_len]
