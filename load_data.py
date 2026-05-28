@@ -146,17 +146,30 @@ def get_loader(data_name, batch_size, noisy_ratio, noise_mode, data_root=None, n
     elif data_name == 'INRIA-Websearch':
         path = _resolve_data_path('INRIA-Websearch.mat', data_root)
         data = sio.loadmat(path)
-        img_train = data['tr_img'].astype('float32')
-        text_train = data['tr_txt'].astype('float32')
-        label_train_img = data['tr_img_lab'].reshape([-1,1]).astype('int16')
+        if 'tr_img' in data:
+            img_train = data['tr_img'].astype('float32')
+            text_train = data['tr_txt'].astype('float32')
+            label_train_img = data['tr_img_lab'].reshape([-1,1]).astype('int16')
 
-        img_valid = data['val_img'].astype('float32')
-        text_valid = data['val_txt'].astype('float32')
-        label_valid_img = data['val_img_lab'].reshape([-1,1]).astype('int16')
+            img_valid = data['val_img'].astype('float32')
+            text_valid = data['val_txt'].astype('float32')
+            label_valid_img = data['val_img_lab'].reshape([-1,1]).astype('int16')
 
-        img_test = data['te_img'].astype('float32')
-        text_test = data['te_txt'].astype('float32')
-        label_test_img = data['te_img_lab'].reshape([-1,1]).astype('int16') 
+            img_test = data['te_img'].astype('float32')
+            text_test = data['te_txt'].astype('float32')
+            label_test_img = data['te_img_lab'].reshape([-1,1]).astype('int16')
+        else:
+            img_train = data['img_train'].astype('float32')
+            text_train = data['text_train'].astype('float32')
+            label_train_img = data['label_train'].astype('int16')
+
+            img_valid = data['img_valid'].astype('float32')
+            text_valid = data['text_valid'].astype('float32')
+            label_valid_img = data['label_valid'].astype('int16')
+
+            img_test = data['img_test'].astype('float32')
+            text_test = data['text_test'].astype('float32')
+            label_test_img = data['label_test'].astype('int16')
     elif data_name == 'nuswide':
         valid_len = 0
         path = _resolve_data_path('nus_wide_deep_doc2vec-corr-ae.h5py', data_root)
