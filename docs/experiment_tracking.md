@@ -93,7 +93,7 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py \
 |---:|---|---|---:|---:|---|
 | 1 | `wiki` | `nirnl` | 0.2 | 1 | 完成 |
 | 2 | `wiki` | `ssmh` | 0.2 | 1 | 完成 |
-| 3 | `xmedia` | `nirnl` | 0.2 | 1 | 待跑 |
+| 3 | `xmedia` | `nirnl` | 0.2 | 1 | 完成 |
 | 4 | `xmedia` | `ssmh` | 0.2 | 1 | 待跑 |
 | 5 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | 待跑 |
 | 6 | `INRIA-Websearch` | `ssmh` | 0.2 | 1 | 待跑 |
@@ -214,6 +214,7 @@ test_imgs_labels
 |---|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---|---|
 | 2026-05-27 | `wiki` | `nirnl` | 0.2 | 1 | AAAI default | 0.523821 | 0.486570 | 0.505195 | 0.655180 | 0.670087 | 0.313426 | `aaaidefault_wiki_nirnl` | 完成 |
 | 2026-05-28 | `wiki` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.530816 | 0.479868 | 0.505342 | 0.649357 | 0.669582 | 0.321967 | `aaaidefault_wiki_ssmh` | 完成 |
+| 2026-05-28 | `xmedia` | `nirnl` | 0.2 | 1 | AAAI default | 0.918511 | 0.916813 | 0.917662 | 0.941751 | 0.958052 | 0.357104 | `aaaidefault_xmedia_nirnl` | 完成 |
 
 ## 当前下一步
 
