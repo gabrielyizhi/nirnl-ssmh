@@ -95,7 +95,7 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py \
 | 2 | `wiki` | `ssmh` | 0.2 | 1 | 完成 |
 | 3 | `xmedia` | `nirnl` | 0.2 | 1 | 完成 |
 | 4 | `xmedia` | `ssmh` | 0.2 | 1 | 完成 |
-| 5 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | 待跑 |
+| 5 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | 完成 |
 | 6 | `INRIA-Websearch` | `ssmh` | 0.2 | 1 | 待跑 |
 
 ## 第二阶段：噪声鲁棒性实验
@@ -216,6 +216,7 @@ test_imgs_labels
 | 2026-05-28 | `wiki` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.530816 | 0.479868 | 0.505342 | 0.649357 | 0.669582 | 0.321967 | `aaaidefault_wiki_ssmh` | 完成 |
 | 2026-05-28 | `xmedia` | `nirnl` | 0.2 | 1 | AAAI default | 0.918511 | 0.916813 | 0.917662 | 0.941751 | 0.958052 | 0.357104 | `aaaidefault_xmedia_nirnl` | 完成 |
 | 2026-05-28 | `xmedia` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.920312 | 0.917910 | 0.919111 | 0.945662 | 0.958071 | 0.358795 | `aaaidefault_xmedia_ssmh` | 完成 |
+| 2026-05-28 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | AAAI default | 0.521811 | 0.530476 | 0.526144 | 0.590407 | 0.630620 | 0.110692 | `aaaidefault_inria_nirnl` | 完成 |
 
 ## 当前下一步
 
