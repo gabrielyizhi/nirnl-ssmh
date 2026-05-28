@@ -92,7 +92,7 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py \
 | 优先级 | 数据集 | 方法 | 噪声比例 | seed | 状态 |
 |---:|---|---|---:|---:|---|
 | 1 | `wiki` | `nirnl` | 0.2 | 1 | 完成 |
-| 2 | `wiki` | `ssmh` | 0.2 | 1 | 待跑 |
+| 2 | `wiki` | `ssmh` | 0.2 | 1 | 完成 |
 | 3 | `xmedia` | `nirnl` | 0.2 | 1 | 待跑 |
 | 4 | `xmedia` | `ssmh` | 0.2 | 1 | 待跑 |
 | 5 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | 待跑 |
@@ -213,22 +213,35 @@ test_imgs_labels
 | 日期 | 数据集 | 方法 | 噪声比例 | seed | 额外参数 | I2T MAP | T2I MAP | Avg MAP | I2T nDCG@100 | T2I nDCG@100 | Hamming Spearman | 日志名 | 状态 |
 |---|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---|---|
 | 2026-05-27 | `wiki` | `nirnl` | 0.2 | 1 | AAAI default | 0.523821 | 0.486570 | 0.505195 | 0.655180 | 0.670087 | 0.313426 | `aaaidefault_wiki_nirnl` | 完成 |
+| 2026-05-28 | `wiki` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.530816 | 0.479868 | 0.505342 | 0.649357 | 0.669582 | 0.321967 | `aaaidefault_wiki_ssmh` | 完成 |
 
 ## 当前下一步
 
-立即运行：
+WIKI 第一组主结果已经完成，下一步转向 `xmedia`，先跑 baseline，再跑 SSMH：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 main.py \
+  --method nirnl \
+  --dataset xmedia \
+  --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
+  --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
+  --logging aaaidefault_xmedia_nirnl
+```
+
+随后运行：
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py \
   --method ssmh \
-  --dataset wiki \
+  --dataset xmedia \
   --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
   --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
-  --logging aaaidefault_wiki_ssmh
+  --logging aaaidefault_xmedia_ssmh
 ```
 
-判断标准：
+WIKI 当前观察：
 
-- 如果 `SSMH Avg MAP > 0.505195`：主方法在 WIKI 的第一组对比成立，继续跑 `xmedia` 和 `INRIA-Websearch`。
-- 如果 `SSMH Avg MAP` 接近但未超过 NIRNL：先看 nDCG、weighted MAP、Hamming Spearman 是否更好，再调整 SSMH loss 权重。
-- 如果 `SSMH Avg MAP` 明显低于 NIRNL：优先检查 `prototype_weight`、`soft_pair_weight`、`quant_weight`，并先跑消融定位负贡献模块。
+- `SSMH Avg MAP = 0.505342`，略高于 `NIRNL Avg MAP = 0.505195`。
+- `SSMH I2T MAP` 更高，但 `T2I MAP` 和 nDCG 略低。
+- `SSMH Hamming Spearman = 0.321967`，高于 `NIRNL = 0.313426`，说明语义顺序保持指标有改善。
+- 当前结论：WIKI 上主方法没有明显拉开差距，需要继续看 `xmedia` 和 `INRIA-Websearch`，并准备后续权重调参与消融定位。
