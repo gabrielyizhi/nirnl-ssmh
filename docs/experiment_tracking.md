@@ -219,33 +219,126 @@ test_imgs_labels
 | 2026-05-28 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | AAAI default | 0.521811 | 0.530476 | 0.526144 | 0.590407 | 0.630620 | 0.110692 | `aaaidefault_inria_nirnl` | 完成 |
 | 2026-05-28 | `INRIA-Websearch` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.468335 | 0.474869 | 0.471602 | 0.557453 | 0.588609 | 0.122077 | `aaaidefault_inria_ssmh` | 完成 |
 
-## 当前下一步
+## INRIA-Websearch 落后分析
 
-WIKI 第一组主结果已经完成，下一步转向 `xmedia`，先跑 baseline，再跑 SSMH：
+### 现象
 
-```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py \
-  --method nirnl \
-  --dataset xmedia \
-  --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
-  --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
-  --logging aaaidefault_xmedia_nirnl
-```
+在 `INRIA-Websearch` 上，默认 SSMH 明显落后于 NIRNL：
 
-随后运行：
+| 数据集 | 方法 | Avg MAP | I2T MAP | T2I MAP | nDCG 平均 | Hamming Spearman |
+|---|---|---:|---:|---:|---:|---:|
+| `INRIA-Websearch` | `nirnl` | 0.526144 | 0.521811 | 0.530476 | 0.610514 | 0.110692 |
+| `INRIA-Websearch` | `ssmh` | 0.471602 | 0.468335 | 0.474869 | 0.573031 | 0.122077 |
+
+SSMH 的 Hamming Spearman 略高，说明它对语义距离排序有一点改善，但 mAP 和 nDCG 明显下降。这说明当前默认 SSMH 更像是在优化连续语义结构，而没有充分优化检索排序中的同类正样本召回。
+
+### 数据层面证据
+
+对服务器已有三个数据集的训练标签做只读统计后发现：
+
+| 数据集 | 训练样本 | 类别数 | 平均标签数 | 随机样本对零重叠比例 | Jaccard 均值 |
+|---|---:|---:|---:|---:|---:|
+| `wiki` | 2173 | 10 | 1.0 | 0.8923 | 0.1077 |
+| `xmedia` | 4000 | 21 | 1.0 | 0.9498 | 0.0502 |
+| `INRIA-Websearch` | 9000 | 100 | 1.0 | 0.9897 | 0.0103 |
+
+关键结论：
+
+- 当前三个数据集都不是严格意义上的多标签数据，都是单标签或被处理成单标签。
+- INRIA 的类别数最多，随机 pair 中约 98.97% 都是无关负样本。
+- SSMH 的软语义监督在 INRIA 上几乎退化为极稀疏的二值监督，不能充分发挥“多标签复杂语义”的设计优势。
+
+### 可能原因
+
+1. **标签图平滑在单标签 INRIA 上可能是负贡献。**
+
+   `semantic_similarity.py` 中的标签图来自类别共现矩阵。INRIA 每个样本只有一个标签，类别之间几乎没有共现；同时 `build_label_cooccurrence` 会把对角线置零。因此图传播后的标签会被削弱，而不是补充有用语义。
+
+   在默认 `--use_label_graph True --graph_alpha 0.2` 下，单标签样本的同类相似度不会保持为理想的 1.0，而会被图平滑稀释。这会让同类正样本的目标相似度下降，削弱检索训练信号。
+
+2. **当前 soft-margin rank loss 仍以“实例配对”为核心，而不是“同类多正样本”为核心。**
+
+   `soft_margin_rank_loss` 使用 diagonal image-text pair 作为 paired positive，然后对所有 off-diagonal pair 做 margin 约束。对于 INRIA 这种类别检索任务，off-diagonal 中其实包含同类正样本，但当前 loss 只给它们较小 margin，并没有把它们显式作为正样本拉近。
+
+   这会造成一个问题：模型努力让原始配对样本最相似，但对同类非配对样本的召回推动不足。mAP 评价却把同类样本都当作相关样本，所以指标会吃亏。
+
+3. **soft pair MSE 被大量负样本主导。**
+
+   INRIA 的零重叠 pair 比例约 98.97%，`semantic_pair_preserving_loss` 会让绝大多数 cross-modal pair 的预测相似度靠近 0。这个目标会压制全局相似度，容易牺牲少量同类正样本的排序。
+
+4. **prototype loss 在单标签 100 类场景下可能过强。**
+
+   当前 `composite_prototype_loss` 对单标签数据会退化为“每个样本靠近所属类别原型”。INRIA 每类平均约 90 个训练样本，类别多且视觉/文本分布可能复杂。训练早期的原型由未充分训练的特征估计，若 `--prototype_weight 1.0` 太强，可能过早把特征压到不稳定原型附近。
+
+5. **NIRNL 更适配当前这批单标签噪声检索数据。**
+
+   NIRNL 原本就是为 noisy label cross-modal retrieval 设计的，含 pure/hard/noisy 样本划分、邻居软标签和类中心细化。INRIA 当前标签结构更接近“大类别数单标签检索”，因此 NIRNL 的机制反而更贴合。
+
+6. **SSMH 的优势需要真正多标签数据集来体现。**
+
+   当前 SSMH 的创新点是多标签软语义、标签图、组合语义原型和哈希空间语义保持。但 INRIA 不是多标签，且类别共现关系几乎不存在，所以方法优势没有充分发挥。
+
+### 下一步验证实验
+
+优先在 INRIA 上做小规模定位，不要立刻扩大噪声比例：
+
+| 优先级 | 实验 | 目的 | 命令参数 |
+|---:|---|---|---|
+| 1 | 关闭标签图 | 验证图平滑是否负贡献 | `--use_label_graph False` |
+| 2 | 降低 soft pair 权重 | 减少大量负 pair 对 MSE 的主导 | `--soft_pair_weight 0.2` |
+| 3 | 去掉 soft pair | 验证 pair MSE 是否主要伤害 MAP | `--soft_pair_weight 0` |
+| 4 | 降低原型权重 | 减少不稳定类别原型约束 | `--prototype_weight 0.1` |
+| 5 | 去掉原型 | 验证原型模块在 INRIA 是否负贡献 | `--prototype_weight 0` |
+| 6 | 关闭图 + 降低 pair/prototype | 组合修正 | `--use_label_graph False --soft_pair_weight 0.2 --prototype_weight 0.1` |
+
+建议第一条立即运行：
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py \
   --method ssmh \
-  --dataset xmedia \
+  --dataset INRIA-Websearch \
+  --use_label_graph False \
   --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
   --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
-  --logging aaaidefault_xmedia_ssmh
+  --logging ablation_inria_ssmh_no_graph
 ```
 
-WIKI 当前观察：
+判断标准：
 
-- `SSMH Avg MAP = 0.505342`，略高于 `NIRNL Avg MAP = 0.505195`。
-- `SSMH I2T MAP` 更高，但 `T2I MAP` 和 nDCG 略低。
-- `SSMH Hamming Spearman = 0.321967`，高于 `NIRNL = 0.313426`，说明语义顺序保持指标有改善。
-- 当前结论：WIKI 上主方法没有明显拉开差距，需要继续看 `xmedia` 和 `INRIA-Websearch`，并准备后续权重调参与消融定位。
+- 如果关闭标签图后 Avg MAP 明显上升，说明单标签数据上图传播确实负贡献。
+- 如果仍落后，则优先继续跑 `--soft_pair_weight 0.2` 和 `--prototype_weight 0.1`。
+- 如果组合修正仍低于 NIRNL，说明当前 SSMH 主体需要改 loss：把同类 off-diagonal pair 显式作为 positives，而不是只依赖 diagonal paired positive。
+
+## 当前下一步
+
+主结果矩阵已经完成。下一步先定位 INRIA 上 SSMH 落后的原因，优先关闭标签图：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 main.py \
+  --method ssmh \
+  --dataset INRIA-Websearch \
+  --use_label_graph False \
+  --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
+  --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
+  --logging ablation_inria_ssmh_no_graph
+```
+
+若仍落后，继续跑：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 main.py \
+  --method ssmh \
+  --dataset INRIA-Websearch \
+  --use_label_graph False \
+  --soft_pair_weight 0.2 \
+  --prototype_weight 0.1 \
+  --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
+  --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
+  --logging ablation_inria_ssmh_no_graph_pair02_proto01
+```
+
+当前主结果观察：
+
+- `wiki`：SSMH 略高于 NIRNL，但差距很小。
+- `xmedia`：SSMH 小幅稳定领先 NIRNL。
+- `INRIA-Websearch`：SSMH 明显落后 NIRNL，需要先做消融定位。
