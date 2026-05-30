@@ -6,12 +6,10 @@
 
 ## 当前结论
 
-- 服务器当前可用数据集：`wiki`、`xmedia`、`INRIA-Websearch`。
-- 代码默认数据集是 `nuswide`，但服务器当前缺少 `nus_wide_deep_doc2vec-corr-ae.h5py`，所以不能直接用默认 `dataset=nuswide` 跑 AAAI 默认流程。
-- 当前不缺启动实验的数据集：先用 `wiki`、`xmedia`、`INRIA-Websearch` 可以完成主结果、噪声鲁棒性和消融验证。
-- 若要做更标准、更有说服力的大规模多标签跨模态哈希实验，需要补 `NUS-WIDE` 的预处理特征文件，或者新增数据预处理流程。
-- 服务器旧项目中存在 `nuswide` / `xmedianet` 的历史结果文件，但在 `/home/liuyizhi` 下没有找到当前代码期望的预处理数据文件。
-- 论文当前最应该先做：在 `wiki` 上跑 `SSMH`，和已经跑通的 `NIRNL` 形成第一组直接对比。
+- 服务器当前可用数据集：`wiki`、`xmedia`、`INRIA-Websearch`、`nuswide`。
+- `nuswide` 已经根据官方 NUS-WIDE Train/Test split、1k tags 文本特征和 5 组 normalized low-level 图像特征构建为代码可读的 h5py 文件。
+- 当前 NUS-WIDE 文件是可运行版本，不是原论文历史使用的 deep/doc2vec 预处理文件；因此首次结果应标注为 `NUS-WIDE-TC21 low-level+tags`。
+- 主结果矩阵已经完成 `wiki/xmedia/INRIA-Websearch` 的 NIRNL/SSMH 默认对比；下一步可以并行做 INRIA 定位消融和 NUS-WIDE 跑通验证。
 
 ## 服务器数据集状态
 
@@ -23,15 +21,15 @@
 
 | 数据集参数名 | 代码期望文件 | 服务器状态 | 备注 |
 |---|---|---|---|
-| `wiki` | `wiki.mat` | 可用 | 已跑通 NIRNL 100 epoch |
-| `xmedia` | `XMediaFeatures.mat` | 可用 | 待跑 |
-| `INRIA-Websearch` | `INRIA-Websearch.mat` | 可用 | 待跑 |
-| `nuswide` | `nus_wide_deep_doc2vec-corr-ae.h5py` | 缺失 | AAAI 默认 dataset，但当前无法直接跑 |
+| `wiki` | `wiki.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果 |
+| `xmedia` | `XMediaFeatures.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果 |
+| `INRIA-Websearch` | `INRIA-Websearch.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果，SSMH 落后需定位 |
+| `nuswide` | `nus_wide_deep_doc2vec-corr-ae.h5py` | 可用 | 2026-05-30 新构建的 TC21 low-level+tags 版本，已通过 loader 验证 |
 | `xmedianet` | `xmedianet_deep_doc2vec_data.h5py` + `XMediaNet5View_Doc2Vec.mat` | 缺失 | 可作为后续扩展数据集 |
 
 只读搜索结果：
 
-- 未找到 `/home/liuyizhi/**/nus_wide_deep_doc2vec-corr-ae.h5py`。
+- `/home/liuyizhi/NIRNL-AAAI26/Clean_idx/nus_wide_deep_doc2vec-corr-ae.h5py` 已生成。
 - 未找到 `/home/liuyizhi/**/xmedianet_deep_doc2vec_data.h5py`。
 - 未找到 `/home/liuyizhi/**/XMediaNet5View_Doc2Vec.mat`。
 - 找到了旧实验输出，例如 `/home/liuyizhi/NIRNL-AAAI26/Avg_MAP_data/nuswide_Avg_MAP_0.2_0_.mat` 和 `/home/liuyizhi/NIRNL-AAAI26/logging/nuswide.log`，说明历史上可能在别的路径或别的机器上跑过 NUS-WIDE。
@@ -42,12 +40,12 @@
 |---|---|---|---|
 | 环境验证 | 服务器连接、GPU、依赖、代码入口跑通 | 完成 | 无 |
 | Baseline 验证 | WIKI + NIRNL + 默认 AAAI 超参 | 完成 | 作为第一条 baseline |
-| 主方法验证 | WIKI + SSMH + 同等超参 | 待做 | 立即执行 |
-| 主结果表 | 3 个现有数据集上比较 NIRNL 和 SSMH | 待做 | WIKI 后跑 XMedia、INRIA |
+| 主方法验证 | WIKI + SSMH + 同等超参 | 完成 | 无 |
+| 主结果表 | 3 个现有数据集上比较 NIRNL 和 SSMH | 完成 | 扩展 NUS-WIDE 默认对比 |
 | 噪声鲁棒性 | 多噪声比例比较 NIRNL 和 SSMH | 待做 | 先 WIKI，后扩展 |
 | 消融实验 | 验证 SSMH 各模块贡献 | 待做 | 先 WIKI r=0.2/r=0.4 |
 | 多 seed | 统计稳定性 `mean ± std` | 待做 | 主趋势稳定后补 |
-| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 待做 | 可并行准备，但不是当前阻塞项 |
+| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 完成一版 | 下一步先跑通 `nuswide` NIRNL/SSMH，再决定是否补深度特征 |
 
 ## 第一阶段：必须先跑的主结果
 
@@ -174,7 +172,7 @@ w/o soft pair
 
 ## NUS-WIDE 数据集计划
 
-### 当前问题
+### 当前状态
 
 代码的 `nuswide` loader 不是读取原始图片，而是读取已经预处理好的特征文件：
 
@@ -196,15 +194,33 @@ test_texts
 test_imgs_labels
 ```
 
-因此，仅下载原始 NUS-WIDE 标注包还不能直接跑当前代码。可选方案：
+2026-05-30 已经用本地下载的 5 个 NUS-WIDE 压缩包构建出一版可运行 h5py：
 
-1. 找到原论文/旧项目使用的预处理 `.h5py` 文件，放到 `/home/liuyizhi/NIRNL-AAAI26/Clean_idx`。
-2. 下载 NUS-WIDE 原始标签与图像，再新增预处理脚本，抽取图像深度特征和文本/doc2vec 特征，生成代码期望的 `.h5py`。
-3. 暂时不使用 NUS-WIDE，先用已有 3 个数据集完成方法验证和论文初步结果。
+```text
+/home/liuyizhi/NIRNL-AAAI26/Clean_idx/nus_wide_deep_doc2vec-corr-ae.h5py
+```
+
+构建方式：
+
+- 原始压缩包存放在 `/home/liuyizhi/datasets/NUS-WIDE_raw`。
+- 解压后的工作目录是 `/home/liuyizhi/datasets/NUS-WIDE_work`。
+- 转换脚本是 `scripts/build_nuswide_h5py.py`。
+- 文本特征使用官方 `Train_Tags1k.dat` / `Test_Tags1k.dat`，维度 1000。
+- 图像特征使用 `CH + CM55 + CORR + EDH + WT` 五组 normalized low-level features 拼接，维度 634。
+- 标签使用官方 TrainTestLabels 中样本频率最高的 21 类，保留至少有一个所选标签的样本。
+- 当前 split：train 10500、valid 2100、test 2100。
+- 已验证 h5py key/shape，并已通过 `load_data.get_loader('nuswide')`。
+
+当前 21 个标签：
+
+```text
+sky, clouds, person, water, animal, grass, buildings, window, plants, ocean,
+road, flowers, sunset, reflection, rocks, vehicle, snow, tree, beach, mountain, boats
+```
 
 ### 建议
 
-短期不要让 NUS-WIDE 阻塞实验。当前先跑完 `wiki/xmedia/INRIA-Websearch` 的主结果和 WIKI 消融；同时并行寻找或构建 NUS-WIDE 预处理特征。
+短期可以先用这版 `NUS-WIDE-TC21 low-level+tags` 跑通 NIRNL/SSMH 主流程，用来验证多标签语义模块是否比单标签数据更适配。论文正式表述时要注明这不是原论文历史的 deep/doc2vec 特征版本；如果后续需要更强结果，再补 CLIP/ResNet 图像特征和更强文本语义特征。
 
 ## 结果记录
 
