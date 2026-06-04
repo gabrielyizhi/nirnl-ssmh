@@ -1,6 +1,6 @@
 # SSMH 实验计划与结果追踪
 
-更新时间：2026-05-27
+更新时间：2026-06-04
 
 本文档用于追踪 `nirnl-ssmh` 后续所有实验。每次实验跑完后，需要在“结果记录”中追加一行，并在“阶段状态”中更新完成情况。
 
@@ -10,7 +10,7 @@
 - `nuswide` 已经根据官方 NUS-WIDE Train/Test split、1k tags 文本特征和 5 组 normalized low-level 图像特征构建为代码可读的 h5py 文件。
 - 当前 NUS-WIDE 文件是可运行版本，不是原论文历史使用的 deep/doc2vec 预处理文件；因此首次结果应标注为 `NUS-WIDE-TC21 low-level+tags`。
 - 主结果矩阵已经完成 `wiki/xmedia/INRIA-Websearch` 的 NIRNL/SSMH 默认对比；NUS-WIDE-TC21 上也已完成 NIRNL/SSMH 默认对比。
-- NUS-WIDE-TC21 上 SSMH 明显领先 NIRNL：Avg MAP 从 `0.540769` 提升到 `0.586722`，Hamming semantic Spearman 从 `0.283285` 提升到 `0.424776`。这说明真正多标签数据更能体现 SSMH 的软语义建模优势。
+- NUS-WIDE-TC21 上 SSMH 明显领先 NIRNL，且 seed 1/2/3 结果稳定：Avg MAP 从 `0.542856 ± 0.001836` 提升到 `0.586678 ± 0.002577`，平均增益 `+0.043822 ± 0.003436`。这说明真正多标签数据更能体现 SSMH 的软语义建模优势。
 
 ## 服务器数据集状态
 
@@ -45,8 +45,8 @@
 | 主结果表 | 3 个现有数据集上比较 NIRNL 和 SSMH | 完成 | 已扩展 NUS-WIDE-TC21 默认对比 |
 | 噪声鲁棒性 | 多噪声比例比较 NIRNL 和 SSMH | 待做 | 先 WIKI，后扩展 |
 | 消融实验 | 验证 SSMH 各模块贡献 | 待做 | 先 WIKI r=0.2/r=0.4 |
-| 多 seed | 统计稳定性 `mean ± std` | 待做 | 主趋势稳定后补 |
-| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 完成一版并跑通 | 下一步做多 seed/噪声比例，或补更强深度特征 |
+| 多 seed | 统计稳定性 `mean ± std` | 部分完成 | 已完成 NUS-WIDE-TC21 r=0.2 seed 1/2/3；后续补 WIKI/XMedia |
+| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 完成一版并跑通 | 下一步做噪声比例/消融，或补更强深度特征 |
 
 ## 第一阶段：必须先跑的主结果
 
@@ -237,22 +237,38 @@ road, flowers, sunset, reflection, rocks, vehicle, snow, tree, beach, mountain, 
 | 2026-05-28 | `INRIA-Websearch` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.468335 | 0.474869 | 0.471602 | 0.557453 | 0.588609 | 0.122077 | `aaaidefault_inria_ssmh` | 完成 |
 | 2026-06-04 | `nuswide` | `nirnl` | 0.2 | 1 | NUS-WIDE-TC21 low-level+tags, AAAI default | 0.545773 | 0.535765 | 0.540769 | 0.445470 | 0.468397 | 0.283285 | `aaaidefault_nuswide_tc21_nirnl` | 完成 |
 | 2026-06-04 | `nuswide` | `ssmh` | 0.2 | 1 | NUS-WIDE-TC21 low-level+tags, AAAI default + SSMH default | 0.590982 | 0.582462 | 0.586722 | 0.439560 | 0.461664 | 0.424776 | `aaaidefault_nuswide_tc21_ssmh` | 完成 |
+| 2026-06-04 | `nuswide` | `nirnl` | 0.2 | 2 | NUS-WIDE-TC21 low-level+tags, AAAI default | 0.548849 | 0.539594 | 0.544221 | 0.449349 | 0.465349 | 0.288167 | `aaaidefault_nuswide_tc21_nirnl_s2` | 完成 |
+| 2026-06-04 | `nuswide` | `ssmh` | 0.2 | 2 | NUS-WIDE-TC21 low-level+tags, AAAI default + SSMH default | 0.588240 | 0.579918 | 0.584079 | 0.439279 | 0.456861 | 0.424230 | `aaaidefault_nuswide_tc21_ssmh_s2` | 完成 |
+| 2026-06-04 | `nuswide` | `nirnl` | 0.2 | 3 | NUS-WIDE-TC21 low-level+tags, AAAI default | 0.546576 | 0.540583 | 0.543579 | 0.449381 | 0.466093 | 0.289057 | `aaaidefault_nuswide_tc21_nirnl_s3` | 完成 |
+| 2026-06-04 | `nuswide` | `ssmh` | 0.2 | 3 | NUS-WIDE-TC21 low-level+tags, AAAI default + SSMH default | 0.592220 | 0.586246 | 0.589233 | 0.445086 | 0.456835 | 0.429294 | `aaaidefault_nuswide_tc21_ssmh_s3` | 完成 |
 
 ## NUS-WIDE-TC21 默认结果分析
 
 ### 现象
 
-在新构建的 `NUS-WIDE-TC21 low-level+tags` 上，SSMH 明显优于 NIRNL：
+在新构建的 `NUS-WIDE-TC21 low-level+tags` 上，SSMH 明显优于 NIRNL。seed 1/2/3 的统计如下：
 
-| 数据集 | 方法 | Avg MAP | I2T MAP | T2I MAP | nDCG 平均 | Hamming Spearman |
-|---|---|---:|---:|---:|---:|---:|
-| `nuswide` | `nirnl` | 0.540769 | 0.545773 | 0.535765 | 0.456935 | 0.283285 |
-| `nuswide` | `ssmh` | 0.586722 | 0.590982 | 0.582462 | 0.450612 | 0.424776 |
+| 数据集 | 方法 | seed | Avg MAP | I2T MAP | T2I MAP | nDCG 平均 | Hamming Spearman |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `nuswide` | `nirnl` | 1 | 0.540769 | 0.545773 | 0.535765 | 0.456935 | 0.283285 |
+| `nuswide` | `ssmh` | 1 | 0.586722 | 0.590982 | 0.582462 | 0.450612 | 0.424776 |
+| `nuswide` | `nirnl` | 2 | 0.544221 | 0.548849 | 0.539594 | 0.457349 | 0.288167 |
+| `nuswide` | `ssmh` | 2 | 0.584079 | 0.588240 | 0.579918 | 0.448070 | 0.424230 |
+| `nuswide` | `nirnl` | 3 | 0.543579 | 0.546576 | 0.540583 | 0.457737 | 0.289057 |
+| `nuswide` | `ssmh` | 3 | 0.589233 | 0.592220 | 0.586246 | 0.450961 | 0.429294 |
+
+三 seed 汇总：
+
+| 数据集 | 方法 | Avg MAP mean ± std | Hamming Spearman mean ± std |
+|---|---|---:|---:|
+| `nuswide` | `nirnl` | 0.542856 ± 0.001836 | 0.286836 ± 0.003108 |
+| `nuswide` | `ssmh` | 0.586678 ± 0.002577 | 0.426100 ± 0.002780 |
+| `nuswide` | `ssmh - nirnl` | +0.043822 ± 0.003436 | +0.139263 |
 
 关键结论：
 
-- SSMH 的 Avg MAP 相比 NIRNL 提升 `+0.045953`，I2T/T2I 两个方向都明显提升。
-- Hamming semantic Spearman 提升 `+0.141491`，说明 SSMH 的哈希空间语义排序保持能力显著更强。
+- SSMH 的 Avg MAP 三 seed 平均提升 `+0.043822 ± 0.003436`，I2T/T2I 两个方向都稳定提升。
+- Hamming semantic Spearman 平均从 `0.286836` 提升到 `0.426100`，说明 SSMH 的哈希空间语义排序保持能力显著更强。
 - nDCG@100 略低于 NIRNL，说明前 100 个近邻的局部排序仍有优化空间；当前 SSMH 更突出的是整体相关样本召回和哈希语义结构。
 - 这组结果支持我们的核心判断：`wiki/xmedia/INRIA` 多为单标签或弱多标签场景，难以充分体现 SSMH；真正多标签 NUS-WIDE-TC21 上，软语义、标签图和组合原型开始发挥作用。
 
@@ -262,9 +278,9 @@ road, flowers, sunset, reflection, rocks, vehicle, snow, tree, beach, mountain, 
 
 | 优先级 | 实验 | 目的 |
 |---:|---|---|
-| 1 | `nuswide` seed 2/3，NIRNL vs SSMH，噪声 0.2 | 验证 `+0.046 Avg MAP` 是否稳定 |
-| 2 | `nuswide` 噪声比例 0.0/0.1/0.4/0.6 | 验证多标签噪声鲁棒性 |
-| 3 | `nuswide` SSMH 消融 | 验证标签图、soft pair、prototype 在多标签数据上的贡献 |
+| 1 | `nuswide` 噪声比例 0.0/0.1/0.4/0.6 | 验证多标签噪声鲁棒性 |
+| 2 | `nuswide` SSMH 消融 | 验证标签图、soft pair、prototype 在多标签数据上的贡献 |
+| 3 | WIKI/XMedia seed 2/3 | 补主表 `mean ± std`，让论文结果更规范 |
 | 4 | 更强图像/文本特征版本 | 用 ResNet/CLIP 图像特征和更强文本特征提升正式论文结果 |
 
 ## INRIA-Websearch 落后分析
@@ -359,19 +375,26 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py \
 
 ## 当前下一步
 
-主结果矩阵已经完成。下一步先定位 INRIA 上 SSMH 落后的原因，优先关闭标签图：
+主结果矩阵已经完成，NUS-WIDE-TC21 的 r=0.2 三 seed 稳定性也已经完成。下一步建议优先跑 NUS-WIDE-TC21 的噪声比例实验：
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py \
-  --method ssmh \
-  --dataset INRIA-Websearch \
-  --use_label_graph False \
+  --method METHOD \
+  --dataset nuswide \
+  --noisy_ratio RATIO \
   --data_root /home/liuyizhi/NIRNL-AAAI26/Clean_idx \
   --noise_root /home/liuyizhi/nirnl-ssmh/noisy \
-  --logging ablation_inria_ssmh_no_graph
+  --logging nuswide_tc21_METHOD_rRATIO_s1
 ```
 
-若仍落后，继续跑：
+推荐顺序：
+
+```text
+RATIO = 0.0, 0.1, 0.4, 0.6
+METHOD = nirnl, ssmh
+```
+
+若需要继续定位 INRIA，则保留以下消融作为备选：
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py \
@@ -390,3 +413,4 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py \
 - `wiki`：SSMH 略高于 NIRNL，但差距很小。
 - `xmedia`：SSMH 小幅稳定领先 NIRNL。
 - `INRIA-Websearch`：SSMH 明显落后 NIRNL，需要先做消融定位。
+- `nuswide`：SSMH 在 NUS-WIDE-TC21 上三 seed 稳定领先 NIRNL，说明多标签场景是当前方法最有说服力的主战场。
