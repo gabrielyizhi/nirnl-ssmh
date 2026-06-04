@@ -9,7 +9,8 @@
 - 服务器当前可用数据集：`wiki`、`xmedia`、`INRIA-Websearch`、`nuswide`。
 - `nuswide` 已经根据官方 NUS-WIDE Train/Test split、1k tags 文本特征和 5 组 normalized low-level 图像特征构建为代码可读的 h5py 文件。
 - 当前 NUS-WIDE 文件是可运行版本，不是原论文历史使用的 deep/doc2vec 预处理文件；因此首次结果应标注为 `NUS-WIDE-TC21 low-level+tags`。
-- 主结果矩阵已经完成 `wiki/xmedia/INRIA-Websearch` 的 NIRNL/SSMH 默认对比；下一步可以并行做 INRIA 定位消融和 NUS-WIDE 跑通验证。
+- 主结果矩阵已经完成 `wiki/xmedia/INRIA-Websearch` 的 NIRNL/SSMH 默认对比；NUS-WIDE-TC21 上也已完成 NIRNL/SSMH 默认对比。
+- NUS-WIDE-TC21 上 SSMH 明显领先 NIRNL：Avg MAP 从 `0.540769` 提升到 `0.586722`，Hamming semantic Spearman 从 `0.283285` 提升到 `0.424776`。这说明真正多标签数据更能体现 SSMH 的软语义建模优势。
 
 ## 服务器数据集状态
 
@@ -24,7 +25,7 @@
 | `wiki` | `wiki.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果 |
 | `xmedia` | `XMediaFeatures.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果 |
 | `INRIA-Websearch` | `INRIA-Websearch.mat` | 可用 | 已完成 NIRNL/SSMH 默认主结果，SSMH 落后需定位 |
-| `nuswide` | `nus_wide_deep_doc2vec-corr-ae.h5py` | 可用 | 2026-05-30 新构建的 TC21 low-level+tags 版本，已通过 loader 验证 |
+| `nuswide` | `nus_wide_deep_doc2vec-corr-ae.h5py` | 可用 | 2026-05-30 新构建的 TC21 low-level+tags 版本，已完成 NIRNL/SSMH 默认对比 |
 | `xmedianet` | `xmedianet_deep_doc2vec_data.h5py` + `XMediaNet5View_Doc2Vec.mat` | 缺失 | 可作为后续扩展数据集 |
 
 只读搜索结果：
@@ -41,11 +42,11 @@
 | 环境验证 | 服务器连接、GPU、依赖、代码入口跑通 | 完成 | 无 |
 | Baseline 验证 | WIKI + NIRNL + 默认 AAAI 超参 | 完成 | 作为第一条 baseline |
 | 主方法验证 | WIKI + SSMH + 同等超参 | 完成 | 无 |
-| 主结果表 | 3 个现有数据集上比较 NIRNL 和 SSMH | 完成 | 扩展 NUS-WIDE 默认对比 |
+| 主结果表 | 3 个现有数据集上比较 NIRNL 和 SSMH | 完成 | 已扩展 NUS-WIDE-TC21 默认对比 |
 | 噪声鲁棒性 | 多噪声比例比较 NIRNL 和 SSMH | 待做 | 先 WIKI，后扩展 |
 | 消融实验 | 验证 SSMH 各模块贡献 | 待做 | 先 WIKI r=0.2/r=0.4 |
 | 多 seed | 统计稳定性 `mean ± std` | 待做 | 主趋势稳定后补 |
-| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 完成一版 | 下一步先跑通 `nuswide` NIRNL/SSMH，再决定是否补深度特征 |
+| NUS-WIDE | 获取或构建 NUS-WIDE 预处理特征 | 完成一版并跑通 | 下一步做多 seed/噪声比例，或补更强深度特征 |
 
 ## 第一阶段：必须先跑的主结果
 
@@ -234,6 +235,37 @@ road, flowers, sunset, reflection, rocks, vehicle, snow, tree, beach, mountain, 
 | 2026-05-28 | `xmedia` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.920312 | 0.917910 | 0.919111 | 0.945662 | 0.958071 | 0.358795 | `aaaidefault_xmedia_ssmh` | 完成 |
 | 2026-05-28 | `INRIA-Websearch` | `nirnl` | 0.2 | 1 | AAAI default | 0.521811 | 0.530476 | 0.526144 | 0.590407 | 0.630620 | 0.110692 | `aaaidefault_inria_nirnl` | 完成 |
 | 2026-05-28 | `INRIA-Websearch` | `ssmh` | 0.2 | 1 | AAAI default + SSMH default | 0.468335 | 0.474869 | 0.471602 | 0.557453 | 0.588609 | 0.122077 | `aaaidefault_inria_ssmh` | 完成 |
+| 2026-06-04 | `nuswide` | `nirnl` | 0.2 | 1 | NUS-WIDE-TC21 low-level+tags, AAAI default | 0.545773 | 0.535765 | 0.540769 | 0.445470 | 0.468397 | 0.283285 | `aaaidefault_nuswide_tc21_nirnl` | 完成 |
+| 2026-06-04 | `nuswide` | `ssmh` | 0.2 | 1 | NUS-WIDE-TC21 low-level+tags, AAAI default + SSMH default | 0.590982 | 0.582462 | 0.586722 | 0.439560 | 0.461664 | 0.424776 | `aaaidefault_nuswide_tc21_ssmh` | 完成 |
+
+## NUS-WIDE-TC21 默认结果分析
+
+### 现象
+
+在新构建的 `NUS-WIDE-TC21 low-level+tags` 上，SSMH 明显优于 NIRNL：
+
+| 数据集 | 方法 | Avg MAP | I2T MAP | T2I MAP | nDCG 平均 | Hamming Spearman |
+|---|---|---:|---:|---:|---:|---:|
+| `nuswide` | `nirnl` | 0.540769 | 0.545773 | 0.535765 | 0.456935 | 0.283285 |
+| `nuswide` | `ssmh` | 0.586722 | 0.590982 | 0.582462 | 0.450612 | 0.424776 |
+
+关键结论：
+
+- SSMH 的 Avg MAP 相比 NIRNL 提升 `+0.045953`，I2T/T2I 两个方向都明显提升。
+- Hamming semantic Spearman 提升 `+0.141491`，说明 SSMH 的哈希空间语义排序保持能力显著更强。
+- nDCG@100 略低于 NIRNL，说明前 100 个近邻的局部排序仍有优化空间；当前 SSMH 更突出的是整体相关样本召回和哈希语义结构。
+- 这组结果支持我们的核心判断：`wiki/xmedia/INRIA` 多为单标签或弱多标签场景，难以充分体现 SSMH；真正多标签 NUS-WIDE-TC21 上，软语义、标签图和组合原型开始发挥作用。
+
+### 下一步
+
+建议优先补 NUS-WIDE-TC21 的稳定性和鲁棒性：
+
+| 优先级 | 实验 | 目的 |
+|---:|---|---|
+| 1 | `nuswide` seed 2/3，NIRNL vs SSMH，噪声 0.2 | 验证 `+0.046 Avg MAP` 是否稳定 |
+| 2 | `nuswide` 噪声比例 0.0/0.1/0.4/0.6 | 验证多标签噪声鲁棒性 |
+| 3 | `nuswide` SSMH 消融 | 验证标签图、soft pair、prototype 在多标签数据上的贡献 |
+| 4 | 更强图像/文本特征版本 | 用 ResNet/CLIP 图像特征和更强文本特征提升正式论文结果 |
 
 ## INRIA-Websearch 落后分析
 
