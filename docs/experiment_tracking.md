@@ -4,6 +4,8 @@
 
 本文档用于追踪 `nirnl-ssmh` 后续所有实验。每次实验跑完后，需要在“结果记录”中追加一行，并在“阶段状态”中更新完成情况。
 
+方法定位、AAAI 工作差异和正式对比基线见 [`ssmh_vs_aaai_and_baselines.md`](ssmh_vs_aaai_and_baselines.md)。
+
 ## 当前结论
 
 - 服务器当前可用数据集：`wiki`、`xmedia`、`INRIA-Websearch`、`nuswide`。
